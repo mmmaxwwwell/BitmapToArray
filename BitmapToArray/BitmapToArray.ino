@@ -91,7 +91,8 @@ void printBmp(){
 
 
 void bmpSave(byte sel) {
-  char *filename;
+  char *filename = "XXX.bmp";//need to set to make sure filename is big enough for the string to char* conversion
+                             //otherwise we have an overrun and crash
   String filenamestr = String(sel);
   filenamestr += ".bmp";
   for(uint8_t i = 0; i<sizeof(filenamestr);i++){
