@@ -91,10 +91,13 @@ void printBmp(){
 
 
 void bmpSave(byte sel) {
-  char *filename = "0.bmp";
-  // String filenamestr = String(sel + ".bmp");
-  //  filenamestr.toCharArray(filename,sizeof(filenamestr));
-  // *filename<<String(sel + ".bmp");
+  char *filename;
+  String filenamestr = String(sel);
+  filenamestr += ".bmp";
+  for(uint8_t i = 0; i<sizeof(filenamestr);i++){
+  filename[i] = filenamestr.charAt(i);
+ }  
+
   File     bmpFile;
   int      bmpWidth, bmpHeight;   // W+H in pixels
   uint8_t  bmpDepth;              // Bit depth (currently must be 24)
