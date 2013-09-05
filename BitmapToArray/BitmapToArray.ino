@@ -1,66 +1,82 @@
 #include <SD.h>
 #include <Adafruit_GFX.h>   // Core graphics library
 #include <avr/pgmspace.h>
-#include "LPD8806.h"
+//#include "LPD8806.h"
 #include "SPI.h"
 #define numPixels 32
 #define _width numPixels
 #define _height numPixels
 
-prog_uint32_t imageArray[_width][_height];
+//prog_uint32_t imageArray[_width][_height];
 uint8_t modeSel, imageSel;
 
-LPD8806 strip = LPD8806(numPixels);
+//LPD8806 strip = LPD8806(numPixels);
 
 void (*Mode[])(byte) = {
   bmpSave,
-  displayBmp
+  displayBmp,
+  wait
 };
 
 void setup() {
-// Open serial communications and wait for port to open:
+  // Open serial communications and wait for port to open:
   Serial.begin(9600);
-
+  delay(10);
   Serial.print("Initializing SD card...");
   // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
   // Note that even if it's not used as the CS pin, the hardware SS pin 
   // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
   // or the SD library functions will not work. 
-   pinMode(SS, OUTPUT);
-   
+  pinMode(SS, OUTPUT);
+
   if (!SD.begin(4)) {
     Serial.println("initialization failed!");
     return;
   }
   Serial.println("initialization done.");
 
-//  strip.begin(); 
- // strip.show();
+  //  strip.begin(); 
+  // strip.show();
 
-// bmpSave("1.BMP"); 
+  // bmpSave("1.BMP"); 
 }
 
 void loop() {
-  
-(*Mode[modeSel])(imageSel);
+
+  (*Mode[modeSel])(imageSel);
 
 }
 
-
+void wait(byte ignored){
+}
 
 
 uint8_t displayPos;
 void displayBmp(byte ignored){
-for(uint8_t i=0; i<_height; i++){
- 
-  strip.setPixelColor(i,pgm_read_dword(&imageArray[displayPos][i]));
+  for(uint8_t i=0; i<_height; i++){
+
+    //    strip.setPixelColor(i,pgm_read_dword(&imageArray[displayPos][i]));
   }
   displayPos=(displayPos >= 0)?
   displayPos+1:
   0;
-  strip.show();
+  //strip.show();
 }
 
+void printBmp(){
+  for(uint8_t i=0; i<_height; i++){
+    Serial.print(i);
+    Serial.print(",");
+    Serial.print(displayPos);
+    Serial.print(":");
+    //Serial.println(pgm_read_dword(&imageArray[displayPos][i]),HEX);
+
+  }
+  displayPos=(displayPos >= 0)?
+  displayPos+1:
+  0;
+  //strip.show();
+}
 // This function opens a Windows Bitmap (BMP) file and
 // displays it at the given coordinates.  It's sped up
 // by reading many pixels worth of data at a time
@@ -75,10 +91,10 @@ for(uint8_t i=0; i<_height; i++){
 
 
 void bmpSave(byte sel) {
-  char *filename;
-  String filenamestr = String(sel + ".bmp");
-  filenamestr.toCharArray(filename,sizeof(filenamestr));
- // *filename<<String(sel + ".bmp");
+  char *filename = "0.bmp";
+  // String filenamestr = String(sel + ".bmp");
+  //  filenamestr.toCharArray(filename,sizeof(filenamestr));
+  // *filename<<String(sel + ".bmp");
   File     bmpFile;
   int      bmpWidth, bmpHeight;   // W+H in pixels
   uint8_t  bmpDepth;              // Bit depth (currently must be 24)
@@ -103,22 +119,27 @@ void bmpSave(byte sel) {
   // Open requested file on SD card
   if ((bmpFile = SD.open(filename)) == NULL) {
     Serial.print("File not found");
+    modeSel = 2;// wait
     return;
   }
 
   // Parse BMP header
   if(read16(bmpFile) == 0x4D42) { // BMP signature
-    Serial.print("File size: "); Serial.println(read32(bmpFile));
+    Serial.print("File size: "); 
+    Serial.println(read32(bmpFile));
     (void)read32(bmpFile); // Read & ignore creator bytes
     bmpImageoffset = read32(bmpFile); // Start of image data
-    Serial.print("Image Offset: "); Serial.println(bmpImageoffset, DEC);
+    Serial.print("Image Offset: "); 
+    Serial.println(bmpImageoffset, DEC);
     // Read DIB header
-    Serial.print("Header size: "); Serial.println(read32(bmpFile));
+    Serial.print("Header size: "); 
+    Serial.println(read32(bmpFile));
     bmpWidth  = read32(bmpFile);
     bmpHeight = read32(bmpFile);
     if(read16(bmpFile) == 1) { // # planes -- must be '1'
       bmpDepth = read16(bmpFile); // bits per pixel
-      Serial.print("Bit Depth: "); Serial.println(bmpDepth);
+      Serial.print("Bit Depth: "); 
+      Serial.println(bmpDepth);
       if((bmpDepth == 24) && (read32(bmpFile) == 0)) { // 0 = uncompressed
 
         goodBmp = true; // Supported BMP format -- proceed!
@@ -157,7 +178,7 @@ void bmpSave(byte sel) {
           if(flip) // Bitmap is stored bottom-to-top order (normal BMP)
             pos = bmpImageoffset + (bmpHeight - 1 - row) * rowSize;
           else     // Bitmap is stored top-to-bottom
-            pos = bmpImageoffset + row * rowSize;
+          pos = bmpImageoffset + row * rowSize;
           if(bmpFile.position() != pos) { // Need seek?
             bmpFile.seek(pos);
             buffidx = sizeof(sdbuffer); // Force buffer reload
@@ -188,8 +209,9 @@ void bmpSave(byte sel) {
   bmpFile.close();
   if(!goodBmp) {
     Serial.println("BMP format not recognized.");
-  } else {
-   // matrix.swapBuffers(false);
+  } 
+  else {
+    // matrix.swapBuffers(false);
   }
   modeSel=1;
 }
@@ -217,14 +239,22 @@ uint32_t read32(File f) {
 int16_t width(void) { 
   return _width; 
 }
- 
+
 int16_t  height(void) { 
   return _height; 
 }
 
 void savePixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g, uint8_t b){
-  r=((r & 0xF8) << 8)>>1;
-  g=((g & 0xFC) << 3)>>1;
-  b= (b >> 3)>>1;
-  imageArray[x][y] = r | g | b;
+  //imageArray[x][y] = r | g | b;
+  Serial.print(x);
+  Serial.print(",");
+  Serial.print(y);
+  Serial.print(":"); 
+  Serial.print(r,HEX);
+  Serial.print(" ");
+  Serial.print(g,HEX);
+  Serial.print(" ");
+  Serial.println(b,HEX);
 }
+
+
