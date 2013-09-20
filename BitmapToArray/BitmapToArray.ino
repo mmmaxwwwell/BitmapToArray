@@ -1,9 +1,9 @@
 #include <SD.h>
 #include <Adafruit_GFX.h>   // Core graphics library
 #include <avr/pgmspace.h>
-//#include "LPD8806.h"
+#include "LPD8806.h"
 #include "SPI.h"
-#define numPixels 32
+#define numPixels 2
 #define _width numPixels
 #define _height numPixels
 
@@ -12,6 +12,8 @@ uint8_t modeSel, imageSel;
 
 //LPD8806 strip = LPD8806(numPixels);
 uint32_t imageArray[numPixels][numPixels];
+LPD8806 strip = LPD8806(numPixels);
+
 void (*Mode[])(byte) = {
   bmpSave,
   displayBmp,
@@ -21,13 +23,16 @@ void (*Mode[])(byte) = {
 void setup() {
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
-  delay(10);
+    strip.begin(); 
+    strip.show();
+   // delay(10);
   Serial.print("Initializing SD card...");
   // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
   // Note that even if it's not used as the CS pin, the hardware SS pin 
   // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
   // or the SD library functions will not work. 
   pinMode(SS, OUTPUT);
+//  digitalWrite(SS, LOW);// using the ss pin as the led strip enable. the next
 
   if (!SD.begin(4)) {
     Serial.println("initialization failed!");
@@ -35,8 +40,7 @@ void setup() {
   }
   Serial.println("initialization done.");
 
-  //  strip.begin(); 
-  // strip.show();
+
   
 }
 
@@ -54,12 +58,13 @@ uint8_t displayPos;
 void displayBmp(byte ignored){
   for(uint8_t i=0; i<_height; i++){
 
-    //    strip.setPixelColor(i,pgm_read_dword(&imageArray[displayPos][i]));
+  strip.setPixelColor(i,imageArray[displayPos][i]);
   }
   displayPos=(displayPos >= 0)?
   displayPos+1:
   0;
-  //strip.show();
+  strip.show();
+  //Serial.print(".");
 }
 
 void printBmp(){
@@ -90,6 +95,7 @@ void printBmp(){
 
 
 void bmpSave(byte sel) {
+  //digitalWrite(SS, LOW);
   char *filename = "XXX.bmp";//need to set to make sure filename is big enough for the string to char* conversion
                              //otherwise we have an overrun and crash
   String filenamestr = String(sel);
@@ -123,6 +129,7 @@ void bmpSave(byte sel) {
   if ((bmpFile = SD.open(filename)) == NULL) {
     Serial.print("File not found");
     modeSel = 2;// wait
+  //  digitalWrite(SS, HIGH);//enable LED strip
     return;
   }
 
@@ -216,6 +223,7 @@ void bmpSave(byte sel) {
   else {
     // matrix.swapBuffers(false);
   }
+  //digitalWrite(SS, HIGH);//enable LED strip
   modeSel=1;
 }
 
