@@ -11,7 +11,7 @@
 uint8_t modeSel, imageSel;
 
 //LPD8806 strip = LPD8806(numPixels);
-
+uint32_t imageArray[numPixels][numPixels];
 void (*Mode[])(byte) = {
   bmpSave,
   displayBmp,
@@ -37,8 +37,7 @@ void setup() {
 
   //  strip.begin(); 
   // strip.show();
-
-  // bmpSave("1.BMP"); 
+  
 }
 
 void loop() {
@@ -249,16 +248,7 @@ int16_t  height(void) {
 }
 
 void savePixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g, uint8_t b){
-  //imageArray[x][y] = r | g | b;
-  Serial.print(x);
-  Serial.print(",");
-  Serial.print(y);
-  Serial.print(":"); 
-  Serial.print(r,HEX);
-  Serial.print(" ");
-  Serial.print(g,HEX);
-  Serial.print(" ");
-  Serial.println(b,HEX);
+  imageArray[x][y] = (r >> 16) + (g >> 8) + b ;
 }
 
 
