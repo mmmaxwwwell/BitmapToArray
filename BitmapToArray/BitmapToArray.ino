@@ -60,27 +60,13 @@ void displayBmp(byte ignored){
 
   strip.setPixelColor(i,imageArray[displayPos][i]);
   }
-  displayPos=(displayPos >= 0)?
+  displayPos=(displayPos >= _width)?
   displayPos+1:
   0;
   strip.show();
   //Serial.print(".");
 }
 
-void printBmp(){
-  for(uint8_t i=0; i<_height; i++){
-    Serial.print(i);
-    Serial.print(",");
-    Serial.print(displayPos);
-    Serial.print(":");
-    //Serial.println(pgm_read_dword(&imageArray[displayPos][i]),HEX);
-
-  }
-  displayPos=(displayPos >= 0)?
-  displayPos+1:
-  0;
-  //strip.show();
-}
 // This function opens a Windows Bitmap (BMP) file and
 // displays it at the given coordinates.  It's sped up
 // by reading many pixels worth of data at a time
@@ -202,12 +188,14 @@ void bmpSave(byte sel) {
             }
 
             // Convert pixel from BMP to TFT format, push to display
-            b = sdbuffer[buffidx++];
-            g = sdbuffer[buffidx++];
-            r = sdbuffer[buffidx++];
+         //   b = sdbuffer[buffidx++];
+         //   g = sdbuffer[buffidx++];
+         //   r = sdbuffer[buffidx++];
             // bth  tft.pushColor(tft.Color565(r,g,b));
-            savePixel(col,row,r,g,b);
-          } // end pixel
+            savePixel(col,row,sdbuffer[buffidx++],sdbuffer[buffidx++],sdbuffer[buffidx++]);
+      //savePixel(col,row,r,g,b);    
+       
+      } // end pixel
         } // end scanline
         Serial.print("Loaded in ");
         Serial.print(millis() - startTime);
@@ -255,8 +243,9 @@ int16_t  height(void) {
   return _height; 
 }
 
-void savePixel(uint8_t x, uint8_t y, uint8_t r, uint8_t g, uint8_t b){
-  imageArray[x][y] = (r >> 16) + (g >> 8) + b ;
+void savePixel(uint8_t x, uint8_t y, uint8_t b, uint8_t g, uint8_t r){
+  imageArray[x][y] = (r << 16) | (g << 8) | b ;
+//  Serial.println(imageArray[x][y]);//
 }
 
 
