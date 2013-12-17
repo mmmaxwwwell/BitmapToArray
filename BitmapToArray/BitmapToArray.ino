@@ -3,7 +3,7 @@
 #include <avr/pgmspace.h>
 #include "LPD8806.h"
 #include "SPI.h"
-#define numPixels 2
+#define numPixels 64
 #define _width numPixels
 #define _height numPixels
 
@@ -32,15 +32,14 @@ void setup() {
   // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
   // or the SD library functions will not work. 
   pinMode(SS, OUTPUT);
-//  digitalWrite(SS, LOW);// using the ss pin as the led strip enable. the next
 
-  if (!SD.begin(4)) {
+  if (!SD.begin(SS)) {
     Serial.println("initialization failed!");
     return;
   }
   Serial.println("initialization done.");
 
-
+ attachInterrupt(19, buttonpress, LOW); //button 19 external interrupt 7
   
 }
 
@@ -248,4 +247,13 @@ void savePixel(uint8_t x, uint8_t y, uint8_t b, uint8_t g, uint8_t r){
 //  Serial.println(imageArray[x][y]);//
 }
 
-
+unsigned long lastDebounceTime;
+uint8_t debounceDelay = 200;
+void buttonpress(){
+  lastDebounceTime = millis();
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+ imageSel++;
+ 
+  }
+  
+}
