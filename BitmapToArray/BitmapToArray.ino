@@ -3,7 +3,7 @@
 #include <avr/pgmspace.h>
 #include "LPD8806.h"
 #include "SPI.h"
-#define numPixels 64
+#define numPixels 32
 #define _width numPixels
 #define _height numPixels
 
@@ -23,24 +23,32 @@ void (*Mode[])(byte) = {
 void setup() {
   // Open serial communications and wait for port to open:
   Serial.begin(9600);
-    strip.begin(); 
-    strip.show();
-   // delay(10);
+
+
+  while(!Serial.available()){
+  }
+
+
+  Serial.println("init serial");
+  strip.begin(); 
+  strip.show();
+  Serial.println("init strip");
+  // delay(10);
   Serial.print("Initializing SD card...");
   // On the Ethernet Shield, CS is pin 4. It's set as an output by default.
   // Note that even if it's not used as the CS pin, the hardware SS pin 
   // (10 on most Arduino boards, 53 on the Mega) must be left as an output 
   // or the SD library functions will not work. 
-  pinMode(SS, OUTPUT);
+  pinMode(10, OUTPUT);
 
-  if (!SD.begin(SS)) {
-    Serial.println("initialization failed!");
+  if (!SD.begin(10)) {
+    Serial.println(" SD initialization failed!");
     return;
   }
   Serial.println("initialization done.");
 
- attachInterrupt(19, buttonpress, LOW); //button 19 external interrupt 7
-  
+  // attachInterrupt(19, buttonpress, LOW); //button 19 external interrupt 7
+
 }
 
 void loop() {
@@ -57,13 +65,12 @@ uint8_t displayPos;
 void displayBmp(byte ignored){
   for(uint8_t i=0; i<_height; i++){
 
-  strip.setPixelColor(i,imageArray[displayPos][i]);
+    strip.setPixelColor(i,imageArray[displayPos][i]);
   }
   displayPos=(displayPos >= _width)?
   displayPos+1:
   0;
   strip.show();
-  //Serial.print(".");
 }
 
 // This function opens a Windows Bitmap (BMP) file and
@@ -80,15 +87,21 @@ void displayBmp(byte ignored){
 
 
 void bmpSave(byte sel) {
+  Serial.print("start bmpSave");
   //digitalWrite(SS, LOW);
-  char *filename = "XXX.bmp";//need to set to make sure filename is big enough for the string to char* conversion
-                             //otherwise we have an overrun and crash
+  char *filename = "0.bmp";//need to set to make sure filename is big enough for the string to char* conversion
+  //otherwise we have an overrun and crash
+  Serial.print("b1");
   String filenamestr = String(sel);
+  Serial.print("b2");
   filenamestr += ".bmp";
-  for(uint8_t i = 0; i<sizeof(filenamestr);i++){
-  filename[i] = filenamestr.charAt(i);
- }  
-
+  Serial.print("b3");
+  for(int i = 0; i<sizeof(filenamestr);i++){
+    Serial.print("b4");
+   filename[i] = filenamestr.charAt(i);
+    Serial.print("b5");
+  }  
+  Serial.print("!");
   File     bmpFile;
   int      bmpWidth, bmpHeight;   // W+H in pixels
   uint8_t  bmpDepth;              // Bit depth (currently must be 24)
@@ -114,7 +127,7 @@ void bmpSave(byte sel) {
   if ((bmpFile = SD.open(filename)) == NULL) {
     Serial.print("File not found");
     modeSel = 2;// wait
-  //  digitalWrite(SS, HIGH);//enable LED strip
+    //  digitalWrite(SS, HIGH);//enable LED strip
     return;
   }
 
@@ -187,14 +200,14 @@ void bmpSave(byte sel) {
             }
 
             // Convert pixel from BMP to TFT format, push to display
-         //   b = sdbuffer[buffidx++];
-         //   g = sdbuffer[buffidx++];
-         //   r = sdbuffer[buffidx++];
+            //   b = sdbuffer[buffidx++];
+            //   g = sdbuffer[buffidx++];
+            //   r = sdbuffer[buffidx++];
             // bth  tft.pushColor(tft.Color565(r,g,b));
             savePixel(col,row,sdbuffer[buffidx++],sdbuffer[buffidx++],sdbuffer[buffidx++]);
-      //savePixel(col,row,r,g,b);    
-       
-      } // end pixel
+            //savePixel(col,row,r,g,b);    
+
+          } // end pixel
         } // end scanline
         Serial.print("Loaded in ");
         Serial.print(millis() - startTime);
@@ -208,10 +221,9 @@ void bmpSave(byte sel) {
     Serial.println("BMP format not recognized.");
   } 
   else {
-    // matrix.swapBuffers(false);
-  }
-  //digitalWrite(SS, HIGH);//enable LED strip
+  } 
   modeSel=1;
+  Serial.print("Starting display mode");
 }
 
 // These read 16- and 32-bit types from the SD card file.
@@ -244,7 +256,12 @@ int16_t  height(void) {
 
 void savePixel(uint8_t x, uint8_t y, uint8_t b, uint8_t g, uint8_t r){
   imageArray[x][y] = (r << 16) | (g << 8) | b ;
-//  Serial.println(imageArray[x][y]);//
+  Serial.print("x:");
+  Serial.print(x);
+  Serial.print(", y:");
+  Serial.print(y);
+  Serial.print(",hex:");
+  Serial.println(imageArray[x][y],HEX);//
 }
 
 unsigned long lastDebounceTime;
@@ -252,8 +269,9 @@ uint8_t debounceDelay = 200;
 void buttonpress(){
   lastDebounceTime = millis();
   if ((millis() - lastDebounceTime) > debounceDelay) {
- imageSel++;
- 
+    imageSel++;
+
   }
-  
+
 }
+
