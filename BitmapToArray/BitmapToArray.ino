@@ -3,16 +3,16 @@
 #include <avr/pgmspace.h>
 #include "LPD8806.h"
 #include "SPI.h"
-#define numPixels 32
-#define _width numPixels
-#define _height numPixels
+#define numBmpPixels 32
+#define _width numBmpPixels
+#define _height numBmpPixels
 
 //prog_uint32_t imageArray[_width][_height];
 uint8_t modeSel, imageSel;
 
 //LPD8806 strip = LPD8806(numPixels);
-uint32_t imageArray[numPixels][numPixels];
-LPD8806 strip = LPD8806(numPixels);
+uint32_t imageArray[numBmpPixels][numBmpPixels];
+LPD8806 strip = LPD8806(numBmpPixels);
 
 void (*Mode[])(byte) = {
   bmpSave,
@@ -89,18 +89,20 @@ void displayBmp(byte ignored){
 void bmpSave(byte sel) {
   Serial.print("start bmpSave");
   //digitalWrite(SS, LOW);
-  char *filename = "0.bmp";//need to set to make sure filename is big enough for the string to char* conversion
+  char filename[8] = "XXX.bmp";//need to set to make sure filename is big enough for the string to char* conversion
   //otherwise we have an overrun and crash
   Serial.print("b1");
   String filenamestr = String(sel);
   Serial.print("b2");
   filenamestr += ".bmp";
   Serial.print("b3");
-  for(int i = 0; i<sizeof(filenamestr);i++){
-    Serial.print("b4");
-   filename[i] = filenamestr.charAt(i);
-    Serial.print("b5");
-  }  
+  filenamestr.toCharArray(filename, 8);
+  Serial.print("b4");
+  //for(int i = 0; i<sizeof(filenamestr);i++){
+  //  Serial.print("b4");
+  // filename[i] = filenamestr.charAt(i);
+  //  Serial.print("b5");
+ // }  
   Serial.print("!");
   File     bmpFile;
   int      bmpWidth, bmpHeight;   // W+H in pixels
