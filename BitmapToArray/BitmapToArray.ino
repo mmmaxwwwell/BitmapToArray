@@ -1,3 +1,11 @@
+/*----------------------------------
+thanks to IsO-Mick for the dynamic filename handling
+http://pastebin.com/gT3QM6jH
+
+equiv vars left is IsO-Mick's right is mmmaxwwwell's
+m_CurrentFilename = filename
+m_FileIndex = imageSel
+-----------------------------------*/
 #include <SD.h>
 #include <Adafruit_GFX.h>   // Core graphics library
 #include <avr/pgmspace.h>
@@ -6,6 +14,13 @@
 #define numBmpPixels 32
 #define _width numBmpPixels
 #define _height numBmpPixels
+
+
+
+int m_NumberOfFiles;
+String m_FileNames[25];
+String m_CurrentFilename;
+
 
 //prog_uint32_t imageArray[_width][_height];
 uint8_t modeSel, imageSel;
@@ -19,6 +34,51 @@ void (*Mode[])(byte) = {
   displayBmp,
   wait
 };
+
+
+
+void GetFileNamesFromSD(File dir)
+{
+  int fileCount = 0;
+  String CurrentFilename = "";
+  while(1)
+  {
+    File entry =  dir.openNextFile();
+    if (! entry) {
+      // no more files
+      m_NumberOfFiles = fileCount;
+      break;
+    }
+    else
+    {
+      if (entry.isDirectory()) {
+        //GetNextFileName(root);
+      }
+      else {
+        CurrentFilename = entry.name();
+        if (CurrentFilename.endsWith(".bmp") || CurrentFilename.endsWith(".BMP") )//find files with our extension only
+        {
+          m_FileNames[fileCount] = entry.name();
+          fileCount++;
+        }
+      }
+    }
+  }
+}
+
+void isort(String *filenames, int n)
+{
+  for (int i = 1; i < n; ++i)
+  {
+    String j = filenames[i];
+    int k;
+    for (k = i - 1; (k >= 0) && (j < filenames[k]); k--)
+    {
+      filenames[k + 1] = filenames[k];
+    }
+    filenames[k + 1] = j;
+  }
+}
 
 void setup() {
   // Open serial communications and wait for port to open:
@@ -46,6 +106,11 @@ void setup() {
     return;
   }
   Serial.println("initialization done.");
+  //dynamic filename handling
+  File root = SD.open("/");
+  GetFileNamesFromSD(root);//look
+  isort(m_FileNames, m_NumberOfFiles);//rearrange
+  m_CurrentFilename = m_FileNames[0];//set
 
   // attachInterrupt(19, buttonpress, LOW); //button 19 external interrupt 7
 
@@ -88,7 +153,8 @@ void displayBmp(byte ignored){
 
 void bmpSave(byte sel) {
   Serial.print("start bmpSave");
-  //digitalWrite(SS, LOW);
+  /*
+  ////digitalWrite(SS, LOW);
   char filename[8] = "XXX.bmp";//need to set to make sure filename is big enough for the string to char* conversion
   //otherwise we have an overrun and crash
   Serial.print("b1");
@@ -102,7 +168,10 @@ void bmpSave(byte sel) {
   //  Serial.print("b4");
   // filename[i] = filenamestr.charAt(i);
   //  Serial.print("b5");
- // }  
+  // }  
+  */
+  char* filename;
+  m_FileNames[sel].toCharArray(filename, m_FileNames[sel].length());
   Serial.print("!");
   File     bmpFile;
   int      bmpWidth, bmpHeight;   // W+H in pixels
